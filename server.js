@@ -3,6 +3,7 @@
 require('dotenv').config()
 const express = require('express');
 const mongoose = require('mongoose');
+const cors = require('cors');
 const Fruit = require('./models/Fruit');
 
 const app = express();
@@ -16,6 +17,7 @@ app.use((req, res, next) => {
     next();
 })
 
+app.use(cors());
 
 mongoose.connect(process.env.MONGO_URI, {
     useUnifiedTopology: true,
@@ -72,8 +74,28 @@ app.get('/fruits', async (req, res) => {
 //New
 
 //Delete
+app.delete('/fruits/:id', async (req, res) => {
+    try{
+        const deletedFruit = await Fruit.findByIdAndDelete(req.params.id);
+        res.status(200).json(deletedFruit);
+    } catch(error){
+        res.status(400).json({
+            msg: error.message
+        })
+    }
+})
 
 //Update
+app.put('/fruits/:id', async (req, res) => {
+    try {
+        const updatedFruit = await Fruit.findByIdAndUpdate(req.params.id, req.body, { new: true });
+        res.status(200).json(updatedFruit);
+    } catch (error) {
+        res.status(400).json({
+            msg: error.message
+        })
+    }
+})
 
 //Create
 app.post('/fruits', async (req, res) => {
@@ -90,20 +112,28 @@ app.post('/fruits', async (req, res) => {
 //Edit
 
 //Show
-app.get('/fruits/:id', (req, res) => {
-    const id = parseInt(req.params.id)
-    if (id !== id){
-        res.status(404).json({
-            msg: 'dude what are you doin'
+app.get('/fruits/:id', async (req, res) => {
+   try{
+       const foundFruit = await Fruit.findById(req.params.id);
+       res.status(200).json(foundFruit)
+    }catch(error){
+        res.status(400).json({
+            msg: error.message
         })
-    }else if(id >= fruits.length || id < 0){
-        res.status(404).json({
-            msg: 'this value is out of bounds'
-        })
-    }else {
-        res.status(200).json(fruits[id])
     }
 })
+
+app.get('/fruitsByName/:name', async (req, res) => {
+    try{
+        const foundFruit = await Fruit.findOne({name: req.params.name});
+        res.status(200).json(foundFruit)
+    }catch(error){
+        res.status(400).json({
+            msg: error.message
+        })
+    }
+})
+ 
 
 
 
