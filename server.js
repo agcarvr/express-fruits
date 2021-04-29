@@ -10,6 +10,13 @@ const PORT = process.env.PORT || 8080;
 
 
 //define my database and middleware
+app.use(express.json());
+app.use((req, res, next) => {
+    console.log(req.body);
+    next();
+})
+
+
 mongoose.connect(process.env.MONGO_URI, {
     useUnifiedTopology: true,
     useNewUrlParser: true,
@@ -43,9 +50,18 @@ const fruits = [
 // INDUCES
 //Index
 app.get('/fruits', async (req, res) => {
+    let filters;
+    if(Object.keys(req.query).length > 0){
+        filters = {...req.query}
+    }
     try{
-        const foundFruits = await Fruit.find({});
-        res.status(200).json(foundFruits)        
+        if(!filters){
+            const foundFruits = await Fruit.find({});
+            res.status(200).json(foundFruits)        
+        }else{
+            const foundFruits = await Fruit.find({...filters});
+            res.status(200).json(foundFruits)
+        }
     }catch(error){
         res.status(400).json({
             msg: error.message
@@ -60,6 +76,16 @@ app.get('/fruits', async (req, res) => {
 //Update
 
 //Create
+app.post('/fruits', async (req, res) => {
+    try {
+        const createdFruit = await Fruit.create(req.body)
+        res.status(200).json(createdFruit);
+    }catch(error){
+        res.status(400).json({
+            msg: error.message
+        })
+    }
+})
 
 //Edit
 
