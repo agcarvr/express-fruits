@@ -9,6 +9,7 @@ const bcrypt = require('bcryptjs');
 const { hash, jsonAuth, auth } = require('./controllers/authController');
 const SECRET = process.env.SECRET_KEY
 const User = require('./models/User');
+const { urlencoded } = require('express');
 
 
 const app = express();
@@ -17,6 +18,7 @@ const PORT = process.env.PORT || 8080;
 
 //define my database and middleware
 app.use(express.json());
+//app.use(express.urlencoded({extended: false}))
 app.use((req, res, next) => {
     next();
 })
@@ -34,8 +36,9 @@ mongoose.connection.once('connected', () => console.log('Connected to mongo life
 
 
 
-app.use('/fruits', require('./controllers/fruitsController'))
-app.use('/users', require('./controllers/usersController'))
+app.use('/fruits', require('./controllers/fruitsController'));
+app.use('/vegetables', require('./controllers/vegetablesController'));
+app.use('/users', require('./controllers/usersController'));
 
 
 
@@ -58,7 +61,7 @@ app.post('/login', (req, res) => {
                     id: foundUser._id,
                     username: foundUser.username
                 }, SECRET)
-                res.status(200).json({ token, bio: foundUser.bio})
+                res.status(200).json({ token, username: foundUser.username})
             }else{
                 res.status(500).json({
                     problem: 'the comparison did not work, did you change your hash algo'

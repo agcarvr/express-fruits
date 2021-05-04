@@ -23,6 +23,7 @@ module.exports.jsonAuth = (req, res, next)  => {
             res.sendStatus(403)
         } else {
             if(user.username === req.body.username){
+                res.locals.user = user.username;
                 next()
             } else {
                 res.sendStatus(401)
@@ -40,10 +41,13 @@ module.exports.auth = (req, res, next) => {
             if(err){
                 res.sendStatus(403)
             } else {
-                if(user.username === req.body.username){
-                    req.user = user
+                if(user && user.username === req.body.username){
+                    res.locals.user = user.username
                     next()
-                } else {
+                }else if (req.method === "GET" || req.method === "DELETE"){ 
+                    res.locals.user = user.username
+                    next()
+                }else {
                     res.sendStatus(401)
                 }
             }

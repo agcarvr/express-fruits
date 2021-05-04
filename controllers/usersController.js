@@ -2,10 +2,13 @@ const express = require('express');
 const router = express.Router();
 const User = require('../models/User');
 const Fruit = require('../models/Fruit');
+const Vegetable = require('../models/Vegetable');
+const {jsonAuth, auth} = require('./authController')
 
 
-router.get('/', (req, res) => {
-   const userQuery = User.find({}).select('-password').populate('fruits') 
+router.get('/', auth, (req, res) => {
+   console.log(res.locals)
+   const userQuery = User.find({}).select('-password').populate('fruits vegetables') 
    userQuery.exec((err, foundUsers) => {
        if (err){
            console.log(err);
@@ -19,9 +22,10 @@ router.get('/', (req, res) => {
 
 // add fruits to users
 // existing
-router.post('/addFruitToUser/:username', (req, res) =>{
+router.post('/addFruitToUser', jsonAuth, (req, res) =>{
+    console.log(res.locals)
     const fruit = req.body
-    const addFruitQuery = User.findOneAndUpdate({ username: req.params.username }, { $addToSet: { fruits: fruit._id }}, {new: true})
+    const addFruitQuery = User.findOneAndUpdate({ username: res.locals.user}, { $addToSet: { fruits: fruit._id }}, {new: true})
     addFruitQuery.exec((err, updatedUser) => {
         if (err){
             res.status(400).json({
@@ -61,8 +65,52 @@ router.post('/addFruit/:fruit/:username', (req, res) =>{
     })
 })
 
-router.get('/:username', (req, res) => {
-    const userQuery = User.findOne({username: req.params.username}).select('-password').populate('fruits')
+
+router.post('/addVegetableToUser', jsonAuth, (req, res) =>{
+    const vegetable = req.body
+    const addVegetableQuery = User.findOneAndUpdate({ username: res.locals.user }, { $addToSet: { vegetables: vegetable._id }}, {new: true})
+    addVegetableQuery.exec((err, updatedUser) => {
+        if (err){
+            res.status(400).json({
+                msg: err.message
+            })
+        } else {
+            res.status(200).json({
+                msg: `Updated ${res.locals.user} with ${vegetable.name}`
+            })
+        }
+    })
+})
+
+
+router.post('/addVegetable/:vegetable/:username', (req, res) =>{
+    const vegetableQuery = Vegetable.findOne({ name: req.params.vegetable })
+    vegetableQuery.exec(( err, vegetable ) => {
+        if(err){
+            res.status(400).json({
+                msg: err.message
+            })
+        } else {
+            const addVegetableQuery = User.findOneAndUpdate({ username: req.params.username }, { $addToSet: { vegetables: vegetable._id }}, {new: true})
+            addVegetableQuery.exec((err, updatedUser) => {
+                if(err){
+                    res.status(400).json({
+                        msg: err.message
+                    }) 
+                } else {
+                    console.log(updatedUser);
+                    res.status(200).json({
+                        msg: `Updated ${updatedUser.username} with the vegetable ${vegetable.name} `
+                    })
+                }
+            })
+        }
+    })
+})
+
+
+router.get('/:username', auth, (req, res) => {
+    const userQuery = User.findOne({username: req.params.username.toLowerCase()}).select('-password').populate('fruits vegetables')
 
     userQuery.exec((err, foundUser) => {
         if(err){
